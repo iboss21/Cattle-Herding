@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cattle Herding</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" v-show="isOpen">
+        <!-- Contract Board Screen -->
+        <div class="screen" v-if="currentScreen === 'contract_board'" v-show="showScreen">
+            <div class="container">
+                <div class="header">
+                    <h1>🐄 Cattle Purchase</h1>
+                    <button class="close-btn" @click="close">✕</button>
+                </div>
+                
+                <div class="content">
+                    <div class="info-card">
+                        <h3>Select Cattle Type</h3>
+                        <div class="cattle-types">
+                            <div class="cattle-option" 
+                                 v-for="type in cattleTypes" 
+                                 :key="type.id"
+                                 :class="{selected: selectedType === type.id}"
+                                 @click="selectedType = type.id">
+                                <h4>{{ type.name }}</h4>
+                                <p>Buy: ${{ type.buy_price }}</p>
+                                <p>Sell Base: ${{ type.sell_base }}</p>
+                                <p class="desc">{{ type.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Herd Size</h3>
+                        <input type="number" v-model.number="herdSize" min="1" max="25" class="input-field">
+                        <p class="cost-display">Total Cost: ${{ totalCost }}</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Buy Location</h3>
+                        <select v-model="selectedLocation" class="input-field">
+                            <option v-for="loc in buyLocations" :key="loc.name" :value="loc.name">
+                                {{ loc.name }}
+                            </option>
+                        </select>
+                    </div>
+                    
+                    <button class="action-btn primary" @click="buyCattle">Purchase Cattle</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Market Prices Screen -->
+        <div class="screen" v-if="currentScreen === 'market_prices'" v-show="showScreen">
+            <div class="container">
+                <div class="header">
+                    <h1>📊 Market Prices</h1>
+                    <button class="close-btn" @click="close">✕</button>
+                </div>
+                
+                <div class="content">
+                    <div class="info-card" v-for="(market, id) in marketInfo" :key="id">
+                        <h3>{{ market.name }}</h3>
+                        <p class="demand-indicator">Demand: {{ (market.demand * 100).toFixed(0) }}%</p>
+                        
+                        <div class="price-list">
+                            <div class="price-item" v-for="(priceInfo, cattleId) in market.prices" :key="cattleId">
+                                <span>{{ priceInfo.name }}:</span>
+                                <span class="price">${{ priceInfo.price }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Player Stats Screen -->
+        <div class="screen" v-if="currentScreen === 'player_stats'" v-show="showScreen">
+            <div class="container">
+                <div class="header">
+                    <h1>🤠 Ranching Stats</h1>
+                    <button class="close-btn" @click="close">✕</button>
+                </div>
+                
+                <div class="content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Level</h3>
+                            <p class="stat-value">{{ playerStats.level || 1 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>XP</h3>
+                            <p class="stat-value">{{ playerStats.xp || 0 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>Deliveries</h3>
+                            <p class="stat-value">{{ playerStats.total_deliveries || 0 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>Cattle Saved</h3>
+                            <p class="stat-value">{{ playerStats.cattle_saved || 0 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>Cattle Lost</h3>
+                            <p class="stat-value">{{ playerStats.cattle_lost || 0 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>Rustlers Defeated</h3>
+                            <p class="stat-value">{{ playerStats.rustlers_defeated || 0 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>Total Earned</h3>
+                            <p class="stat-value">${{ playerStats.total_earned || 0 }}</p>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <h3>Perfect Deliveries</h3>
+                            <p class="stat-value">{{ playerStats.perfect_deliveries || 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
