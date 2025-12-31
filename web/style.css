@@ -1,0 +1,338 @@
+/* Cattle Herding NUI Styles - Western Theme */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: transparent;
+    overflow: hidden;
+}
+
+#app {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+/* Screen transitions */
+.screen {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.3s ease-out;
+}
+
+.screen[v-show="showScreen"] {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Container */
+.container {
+    background: linear-gradient(135deg, #2c1810 0%, #3d2418 100%);
+    border: 3px solid #8b6914;
+    border-radius: 12px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+    max-width: 800px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, #5d3a1a 0%, #8b6914 100%);
+    padding: 20px 30px;
+    border-bottom: 2px solid #d4af37;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    color: #f5e6d3;
+    font-size: 28px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    font-weight: bold;
+}
+
+.close-btn {
+    background: rgba(139, 0, 0, 0.8);
+    color: #f5e6d3;
+    border: 2px solid #8b0000;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #8b0000;
+    transform: scale(1.1);
+}
+
+/* Content */
+.content {
+    padding: 30px;
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+}
+
+.content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: #2c1810;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: #8b6914;
+    border-radius: 5px;
+}
+
+/* Info Cards */
+.info-card {
+    background: rgba(61, 36, 24, 0.8);
+    border: 2px solid #8b6914;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.info-card h3 {
+    color: #d4af37;
+    font-size: 20px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Cattle Types */
+.cattle-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.cattle-option {
+    background: rgba(93, 58, 26, 0.6);
+    border: 2px solid #5d3a1a;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.cattle-option:hover {
+    background: rgba(93, 58, 26, 0.9);
+    border-color: #8b6914;
+    transform: translateY(-2px);
+}
+
+.cattle-option.selected {
+    background: rgba(139, 105, 20, 0.3);
+    border-color: #d4af37;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+.cattle-option h4 {
+    color: #f5e6d3;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.cattle-option p {
+    color: #d4af37;
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.cattle-option .desc {
+    color: #c0a080;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Input Fields */
+.input-field {
+    width: 100%;
+    background: rgba(44, 24, 16, 0.8);
+    border: 2px solid #8b6914;
+    border-radius: 6px;
+    padding: 12px 15px;
+    color: #f5e6d3;
+    font-size: 16px;
+    font-family: 'Georgia', serif;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #d4af37;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+}
+
+.cost-display {
+    color: #d4af37;
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 15px;
+    text-align: center;
+}
+
+/* Buttons */
+.action-btn {
+    width: 100%;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Georgia', serif;
+    letter-spacing: 1px;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #5d3a1a 0%, #8b6914 100%);
+    color: #f5e6d3;
+    border-color: #d4af37;
+}
+
+.action-btn.primary:hover {
+    background: linear-gradient(135deg, #8b6914 0%, #d4af37 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+}
+
+/* Price List */
+.price-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.price-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: rgba(44, 24, 16, 0.6);
+    border-radius: 6px;
+    color: #f5e6d3;
+}
+
+.price-item .price {
+    color: #d4af37;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.demand-indicator {
+    color: #c0a080;
+    font-size: 14px;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, rgba(93, 58, 26, 0.6) 0%, rgba(61, 36, 24, 0.8) 100%);
+    border: 2px solid #8b6914;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    border-color: #d4af37;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+}
+
+.stat-card h3 {
+    color: #c0a080;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    color: #d4af37;
+    font-size: 32px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(44, 24, 16, 0.5);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #8b6914;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #d4af37;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.info-card {
+    animation: slideUp 0.4s ease-out backwards;
+}
+
+.info-card:nth-child(1) { animation-delay: 0.1s; }
+.info-card:nth-child(2) { animation-delay: 0.2s; }
+.info-card:nth-child(3) { animation-delay: 0.3s; }
+.info-card:nth-child(4) { animation-delay: 0.4s; }
