@@ -1,9 +1,46 @@
 --[[
     Client Main Logic for tlw_cattle_herding
+    The Land of Wolves - www.wolves.land
+    Developer: iBoss
+    
     Handles organic herd AI, spawning, grazing, cohesion, panic, and player interaction
 ]]
 
-local RSGCore = exports['rsg-core']:GetCoreObject()
+-- Framework Detection (LXRCore primary, RSG-Core supported)
+local CoreObject = nil
+local CoreName = nil
+
+if Config.Framework == 'LXRCore' then
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: LXRCore specified in config but not found!')
+    end
+elseif Config.Framework == 'RSG' then
+    if GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: RSG-Core specified in config but not found!')
+    end
+else
+    -- Auto-detect
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    elseif GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    end
+end
+
+if CoreObject then
+    print(string.format('^2[TLW Cattle Herding]^7 Using framework: ^3%s^7', CoreName))
+else
+    print('^1[TLW Cattle Herding]^7 CRITICAL ERROR: No supported framework found! Resource will not function.')
+    print('^1[TLW Cattle Herding]^7 Please install LXRCore or RSG-Core framework.')
+end
 
 -- Player data
 local playerData = {}
@@ -60,7 +97,7 @@ Citizen.CreateThread(function()
     -- Create blips
     CreateLocationBlips()
     
-    print('^2[Cattle Herding]^7 Client started')
+    print('^2[TLW Cattle Herding]^7 Client started | www.wolves.land')
 end)
 
 -- ==========================================
@@ -374,6 +411,38 @@ function StartHerdAI()
             Citizen.Wait(Config.HerdBehavior.cohesion_update_interval or 1000)
             
             ApplyCohesionForces()
+        end
+    end)
+    
+    -- Monitor cattle health and detect player-caused deaths
+    Citizen.CreateThread(function()
+        -- Only run if safety feature is enabled
+        if not Config.Security or not Config.Security.fail_on_player_kill then
+            return -- Exit thread if disabled
+        end
+        
+        while activeHerd.active do
+            Citizen.Wait(100) -- Check frequently to catch deaths
+            
+            local playerPed = PlayerPedId()
+            
+            -- Check each cattle
+            for _, cattle in ipairs(activeHerd.entities) do
+                if DoesEntityExist(cattle) then
+                    -- Check if cattle is dying or dead
+                    if IsEntityDead(cattle) or IsPedDeadOrDying(cattle, true) then
+                        -- Check if player caused the death
+                        local killer = GetPedSourceOfDeath(cattle)
+                        
+                        -- Direct check: player or player's mount killed the cattle
+                        if killer == playerPed or (IsPedOnMount(playerPed) and killer == GetMount(playerPed)) then
+                            -- Player killed their own cattle - FAIL MISSION
+                            FailMission('player_killed_cattle')
+                            return -- Exit thread immediately
+                        end
+                    end
+                end
+            end
         end
     end)
 end
@@ -800,6 +869,23 @@ function CleanupHerd()
     
     stragglers = {}
     aiCowboys = {}
+end
+
+-- Fail mission (player killed cattle)
+function FailMission(reason)
+    if not activeHerd.active then return end
+    
+    Utils.Debug('Mission failed:', reason)
+    
+    -- Notify player
+    Utils.Notify(Config.Messages.mission_failed, 'error')
+    Utils.Notify(Config.Messages.mission_failed_subtitle, 'error')
+    
+    -- Notify server to mark contract as failed
+    TriggerServerEvent('tlw_cattle:missionFailed', activeHerd.token, reason)
+    
+    -- Clean up the herd
+    CleanupHerd()
 end
 
 -- ==========================================

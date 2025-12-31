@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `tlw_cattle_players` (
     `total_earned` INT NOT NULL DEFAULT 0,
     `total_distance` FLOAT NOT NULL DEFAULT 0.0,
     `perfect_deliveries` INT NOT NULL DEFAULT 0,
+    `failed_deliveries` INT NOT NULL DEFAULT 0,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`citizenid`),

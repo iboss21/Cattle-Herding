@@ -1,6 +1,34 @@
 # 🐄 tlw_cattle_herding - Professional Cattle Ranching for RedM
 
-A comprehensive, immersive cattle herding system for RedM/RSG-Core featuring organic herd AI, dynamic market prices, XP progression, AI cowboys, rustler encounters, and a fully functional economy system.
+<div align="center">
+
+**The Land of Wolves**  
+🌐 [www.wolves.land](https://www.wolves.land)
+
+**Developer:** iBoss  
+**Primary Framework:** [LXRCore](https://github.com/lxrcore)  
+**Multi-Framework Support:** LXRCore, RSG-Core
+
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/iboss21/tlw_cattle_herding)
+[![Framework](https://img.shields.io/badge/framework-LXRCore%20%7C%20RSG--Core-green.svg)](https://github.com/lxrcore)
+
+</div>
+
+---
+
+A comprehensive, immersive cattle herding system for RedM featuring organic herd AI, dynamic market prices, XP progression, AI cowboys, rustler encounters, and a fully functional economy system.
+
+## 📸 Screenshots
+
+> **Note:** Screenshots should be captured in-game. See [screenshots/README.md](screenshots/README.md) for details on required screenshots.
+
+<!-- Uncomment when screenshots are available
+![Normal Herding](screenshots/normal_herding.png)
+*Herding cattle peacefully across the frontier*
+
+![Mission Failed](screenshots/mission_failed_notification.png)
+*Safety feature: Mission fails when player kills own cattle*
+-->
 
 ## ✨ Features
 
@@ -10,6 +38,7 @@ A comprehensive, immersive cattle herding system for RedM/RSG-Core featuring org
 - **Buy & Sell System**: Purchase cattle at ranches, herd them to markets, and sell for profit
 - **Dynamic Pricing**: Market prices fluctuate daily based on demand, location, time of day, and distance
 - **Controller & Keyboard Support**: Full compatibility with both input methods
+- **🆕 Safety Feature**: Mission fails if player kills their own cattle (prevents pelt/meat exploits)
 
 ### 📊 Progression System
 - **20 Levels**: Earn XP by herding, selling cattle, and defeating rustlers
@@ -39,12 +68,13 @@ A comprehensive, immersive cattle herding system for RedM/RSG-Core featuring org
 - **Server-Authoritative**: All payouts and validation happen server-side
 - **Anti-Exploit**: Distance checking, rate limiting, entity validation
 - **Token System**: Secure contract tracking prevents duplication exploits
+- **Mission Failure**: Automatic detection of player killing their own cattle
 
 ## 📦 Installation
 
 ### Prerequisites
 - RedM server
-- RSG-Core framework
+- **LXRCore** framework (primary) OR **RSG-Core** framework (supported)
 - oxmysql resource
 
 ### Steps
@@ -59,18 +89,25 @@ A comprehensive, immersive cattle herding system for RedM/RSG-Core featuring org
    - Import `sql/install.sql` into your database
    - This creates the required tables with default market data
 
-3. **Configure**
+3. **Configure Framework**
+   - Edit `config.lua` and set your framework:
+   ```lua
+   Config.Framework = 'LXRCore'  -- or 'RSG' for RSG-Core
+   ```
+   - The script will auto-detect if not configured
+
+4. **Configure Locations and Settings**
    - Edit `config.lua` to customize locations, prices, and behavior
    - Adjust to your server's economy and balance preferences
 
-4. **Add to server.cfg**
+5. **Add to server.cfg**
    ```cfg
    ensure oxmysql
-   ensure rsg-core
+   ensure lxr-core    # or rsg-core if using RSG-Core
    ensure tlw_cattle_herding
    ```
 
-5. **Restart Server**
+6. **Restart Server**
    ```bash
    restart tlw_cattle_herding
    ```
@@ -263,12 +300,14 @@ Unlock at Level 8 | Cost: $75 each | Max: 2
 - Rate limiting on purchases/sales
 - Token-based contract validation
 - SQL injection prevention
+- **NEW:** Mission failure detection when player kills own cattle
 
 ## 🤝 Support
 
 For issues, suggestions, or contributions:
-- GitHub Issues: [Report a Bug](https://github.com/iboss21/Cattle-Herding/issues)
-- Pull Requests Welcome!
+- **Website:** [www.wolves.land](https://www.wolves.land)
+- **GitHub Issues:** [Report a Bug](https://github.com/iboss21/tlw_cattle_herding/issues)
+- **Pull Requests Welcome!**
 
 ## 📜 License
 
@@ -276,13 +315,23 @@ Open source - Free to use and modify for your RedM server.
 
 ## 🙏 Credits
 
-- **Author**: iboss21
-- **Framework**: RSG-Core
-- **Inspiration**: Authentic Red Dead Redemption 2 cattle herding experience
+- **Developer:** iBoss
+- **Organization:** The Land of Wolves (www.wolves.land)
+- **Primary Framework:** LXRCore (github.com/lxrcore)
+- **Supported Frameworks:** RSG-Core
+- **Inspiration:** Authentic Red Dead Redemption 2 cattle herding experience
 
 ## 🔄 Version History
 
-### v2.0.0 (Current)
+### v2.1.0 (Current)
+- **Multi-Framework Support:** LXRCore (primary) and RSG-Core
+- **Safety Feature:** Mission fails if player kills their own cattle
+- **Rebranded:** The Land of Wolves (www.wolves.land)
+- **Enhanced Security:** Failed delivery tracking in database
+- **Auto-Detection:** Automatically detects available framework
+- **Code Review:** Improved detection logic to prevent false positives
+
+### v2.0.0
 - Complete rewrite with organic herd AI
 - RSG-Core integration
 - Dynamic pricing system

@@ -2,10 +2,16 @@ fx_version 'cerulean'
 game 'rdr3'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 
-author 'iboss21'
-description 'tlw_cattle_herding - Professional Cattle Ranching System for RedM/RSG-Core'
-version '2.0.0'
+author 'iBoss - The Land of Wolves'
+description 'tlw_cattle_herding - Professional Cattle Ranching System for RedM | LXRCore & RSG-Core'
+version '2.1.0'
 lua54 'yes'
+
+-- The Land of Wolves
+-- Website: www.wolves.land
+-- Developer: iBoss
+-- Primary Framework: LXRCore (github.com/lxrcore)
+-- Multi-Framework Support: LXRCore, RSG-Core
 
 -- Shared configuration
 shared_scripts {
@@ -40,8 +46,7 @@ files {
     'web/assets/*.svg'
 }
 
--- Dependencies
+-- Dependencies (LXRCore primary, RSG-Core supported)
 dependencies {
-    'rsg-core',
     'oxmysql'
 }

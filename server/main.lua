@@ -1,9 +1,46 @@
 --[[
     Server Main Logic for tlw_cattle_herding
+    The Land of Wolves - www.wolves.land
+    Developer: iBoss
+    
     Handles contracts, buying, selling, XP, and all server-authoritative operations
 ]]
 
-local RSGCore = exports['rsg-core']:GetCoreObject()
+-- Framework Detection (LXRCore primary, RSG-Core supported)
+local CoreObject = nil
+local CoreName = nil
+
+if Config.Framework == 'LXRCore' then
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: LXRCore specified in config but not found!')
+    end
+elseif Config.Framework == 'RSG' then
+    if GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: RSG-Core specified in config but not found!')
+    end
+else
+    -- Auto-detect
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    elseif GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    end
+end
+
+if CoreObject then
+    print(string.format('^2[TLW Cattle Herding]^7 Server using framework: ^3%s^7', CoreName))
+else
+    print('^1[TLW Cattle Herding]^7 CRITICAL ERROR: No supported framework found! Resource will not function.')
+    print('^1[TLW Cattle Herding]^7 Please install LXRCore or RSG-Core framework.')
+end
 
 -- Active contracts (citizenid => contract data)
 local activeContracts = {}
@@ -34,16 +71,25 @@ Citizen.CreateThread(function()
         end
     end)
     
-    print('^2[Cattle Herding]^7 Server started successfully')
+    print('^2[TLW Cattle Herding]^7 Server started successfully | www.wolves.land')
 end)
 
 -- ==========================================
 -- HELPER FUNCTIONS
 -- ==========================================
 
+-- Safe wrapper for getting player (handles missing framework)
+local function GetPlayer(source)
+    if not CoreObject then
+        print('^1[TLW Cattle Herding]^7 ERROR: Cannot get player - no framework loaded')
+        return nil
+    end
+    return CoreObject.Functions.GetPlayer(source)
+end
+
 -- Get or load player data
 local function GetPlayerData(source)
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return nil end
     
     local citizenid = Player.PlayerData.citizenid
@@ -58,7 +104,7 @@ end
 
 -- Load player data from database
 local function LoadPlayerData(source, callback)
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then
         callback(nil)
         return
@@ -91,7 +137,7 @@ end
 
 -- Validate player can perform action
 local function ValidatePlayer(source)
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return false end
     
     -- Job whitelist check if configured
@@ -129,7 +175,7 @@ end)
 -- Player dropped
 AddEventHandler('playerDropped', function()
     local source = source
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     
     if Player then
         local citizenid = Player.PlayerData.citizenid
@@ -166,7 +212,7 @@ RegisterNetEvent('tlw_cattle:buyCattle', function(cattleType, count, locationId)
         return
     end
     
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -255,7 +301,7 @@ end)
 
 RegisterNetEvent('tlw_cattle:hireCowboys', function(count)
     local source = source
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -324,7 +370,7 @@ RegisterNetEvent('tlw_cattle:sellCattle', function(locationId, cattleAlive, dist
         return
     end
     
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -476,7 +522,7 @@ end)
 -- Update contract progress (distance, cattle count)
 RegisterNetEvent('tlw_cattle:updateProgress', function(data)
     local source = source
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -500,7 +546,7 @@ end)
 -- Rustler encounter completed
 RegisterNetEvent('tlw_cattle:rustlerEncounter', function(defeated, cattleStolen)
     local source = source
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -533,6 +579,44 @@ RegisterNetEvent('tlw_cattle:rustlerEncounter', function(defeated, cattleStolen)
     end
 end)
 
+-- Mission failed (player killed cattle)
+RegisterNetEvent('tlw_cattle:missionFailed', function(contractToken, reason)
+    local source = source
+    local Player = GetPlayer(source)
+    if not Player then return end
+    
+    local citizenid = Player.PlayerData.citizenid
+    
+    -- Verify contract exists and belongs to player
+    if not activeContracts[citizenid] then
+        return
+    end
+    
+    local contract = activeContracts[citizenid]
+    
+    -- Verify token matches (security check)
+    if contract.token ~= contractToken then
+        Utils.Debug('Token mismatch in mission failure')
+        return
+    end
+    
+    Utils.Debug(string.format('Mission failed for player %s. Reason: %s', citizenid, reason))
+    
+    -- Mark contract as failed in database
+    DB.CompleteContract(contract.token, 0, 'failed')
+    
+    -- Update player stats (track failed deliveries)
+    -- Note: We track 1 failed delivery, but cattle_lost should reflect actual losses
+    -- Since the mission was terminated early, we lose all remaining cattle
+    DB.UpdatePlayerStats(citizenid, {
+        failed_deliveries = 1,
+        cattle_lost = contract.cattle_alive or contract.herd_size
+    })
+    
+    -- Clear active contract
+    activeContracts[citizenid] = nil
+end)
+
 -- ==========================================
 -- CLIENT REQUESTS
 -- ==========================================
@@ -563,7 +647,7 @@ end)
 -- Request active contract info
 RegisterNetEvent('tlw_cattle:requestContractInfo', function()
     local source = source
-    local Player = RSGCore.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -579,8 +663,11 @@ end)
 -- ADMIN COMMANDS
 -- ==========================================
 
+-- Only register commands if framework is loaded
+if CoreObject and CoreObject.Commands then
+
 -- Set player XP
-RSGCore.Commands.Add(Config.Admin.commands.setxp or 'cattle_setxp', 'Set player cattle XP (Admin)', {{name = 'id', help = 'Player ID'}, {name = 'xp', help = 'XP Amount'}}, false, function(source, args)
+CoreObject.Commands.Add(Config.Admin.commands.setxp or 'cattle_setxp', 'Set player cattle XP (Admin)', {{name = 'id', help = 'Player ID'}, {name = 'xp', help = 'XP Amount'}}, false, function(source, args)
     local targetId = tonumber(args[1])
     local xp = tonumber(args[2])
     
@@ -589,7 +676,7 @@ RSGCore.Commands.Add(Config.Admin.commands.setxp or 'cattle_setxp', 'Set player 
         return
     end
     
-    local TargetPlayer = RSGCore.Functions.GetPlayer(targetId)
+    local TargetPlayer = CoreObject.Functions.GetPlayer(targetId)
     if not TargetPlayer then
         TriggerClientEvent('chat:addMessage', source, {args = {'[Cattle]', 'Player not found'}})
         return
@@ -612,7 +699,7 @@ RSGCore.Commands.Add(Config.Admin.commands.setxp or 'cattle_setxp', 'Set player 
 end, 'admin')
 
 -- Set market demand
-RSGCore.Commands.Add(Config.Admin.commands.setdemand or 'cattle_setdemand', 'Set market demand (Admin)', {{name = 'location', help = 'Location ID'}, {name = 'demand', help = 'Demand (0.5-2.0)'}}, false, function(source, args)
+CoreObject.Commands.Add(Config.Admin.commands.setdemand or 'cattle_setdemand', 'Set market demand (Admin)', {{name = 'location', help = 'Location ID'}, {name = 'demand', help = 'Demand (0.5-2.0)'}}, false, function(source, args)
     local location = args[1]
     local demand = tonumber(args[2])
     
@@ -629,14 +716,14 @@ RSGCore.Commands.Add(Config.Admin.commands.setdemand or 'cattle_setdemand', 'Set
 end, 'admin')
 
 -- Toggle debug mode
-RSGCore.Commands.Add(Config.Admin.commands.debug or 'cattle_debug', 'Toggle debug mode (Admin)', {}, false, function(source, args)
+CoreObject.Commands.Add(Config.Admin.commands.debug or 'cattle_debug', 'Toggle debug mode (Admin)', {}, false, function(source, args)
     Config.Debug = not Config.Debug
     TriggerClientEvent('tlw_cattle:debugMode', -1, Config.Debug)
     TriggerClientEvent('chat:addMessage', source, {args = {'[Cattle]', 'Debug mode: ' .. (Config.Debug and 'ON' or 'OFF')}})
 end, 'admin')
 
 -- Reset player data
-RSGCore.Commands.Add(Config.Admin.commands.reset_player or 'cattle_reset', 'Reset player cattle data (Admin)', {{name = 'id', help = 'Player ID'}}, false, function(source, args)
+CoreObject.Commands.Add(Config.Admin.commands.reset_player or 'cattle_reset', 'Reset player cattle data (Admin)', {{name = 'id', help = 'Player ID'}}, false, function(source, args)
     local targetId = tonumber(args[1])
     
     if not targetId then
@@ -644,7 +731,7 @@ RSGCore.Commands.Add(Config.Admin.commands.reset_player or 'cattle_reset', 'Rese
         return
     end
     
-    local TargetPlayer = RSGCore.Functions.GetPlayer(targetId)
+    local TargetPlayer = CoreObject.Functions.GetPlayer(targetId)
     if not TargetPlayer then
         TriggerClientEvent('chat:addMessage', source, {args = {'[Cattle]', 'Player not found'}})
         return
@@ -661,9 +748,13 @@ RSGCore.Commands.Add(Config.Admin.commands.reset_player or 'cattle_reset', 'Rese
 end, 'admin')
 
 -- Force price update
-RSGCore.Commands.Add('cattle_updateprices', 'Force price update (Admin)', {}, false, function(source, args)
+CoreObject.Commands.Add('cattle_updateprices', 'Force price update (Admin)', {}, false, function(source, args)
     Pricing.ForceUpdate()
     TriggerClientEvent('chat:addMessage', source, {args = {'[Cattle]', 'Prices updated'}})
 end, 'admin')
+
+else
+    print('^1[TLW Cattle Herding]^7 WARNING: Admin commands not registered - no framework loaded')
+end
 
 Utils.Debug('Server main loaded')

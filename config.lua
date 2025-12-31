@@ -1,6 +1,10 @@
 --[[
     tlw_cattle_herding - Authentic Cattle Herding for RedM
     
+    The Land of Wolves - www.wolves.land
+    Developer: iBoss
+    Primary Framework: LXRCore (github.com/lxrcore)
+    
     Philosophy: Real cattle behavior, not game mechanics
     Focus: Pressure, patience, positioning - not buttons and menus
 ]]
@@ -10,7 +14,8 @@ Config = {}
 -- ==============================================
 -- CORE SETTINGS
 -- ==============================================
-Config.Framework = 'RSG'
+-- Framework: 'LXRCore' (primary) or 'RSG' (supported)
+Config.Framework = 'LXRCore'
 Config.Debug = false
 
 -- ==============================================
@@ -385,6 +390,9 @@ Config.Security = {
     -- Rate limits
     cooldown_buy = 3000,              -- ms
     cooldown_sell = 2000,
+    
+    -- Safety feature: Fail mission if player kills own cattle
+    fail_on_player_kill = true,       -- Enable/disable the safety feature
 }
 
 -- ==============================================
@@ -412,6 +420,9 @@ Config.Messages = {
     
     cowboy_hired = "Hired %d cowboys ($%d)",
     cowboy_locked = "Unlock at level %d",
+    
+    mission_failed = "⛔ MISSION FAILED: You killed your own cattle!",
+    mission_failed_subtitle = "Your contract has been terminated.",
 }
 
 -- ==============================================
@@ -440,4 +451,4 @@ Config.DebugVisualization = {
     draw_ai_paths = false,            -- Expensive
 }
 
-print('^2[Cattle Herding]^7 Authentic cattle behavior loaded')
+print('^2[TLW Cattle Herding]^7 Configuration loaded | The Land of Wolves - www.wolves.land')
