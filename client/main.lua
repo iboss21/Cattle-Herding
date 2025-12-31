@@ -1,9 +1,35 @@
 --[[
     Client Main Logic for tlw_cattle_herding
+    The Land of Wolves - www.wolves.land
+    Developer: iBoss
+    
     Handles organic herd AI, spawning, grazing, cohesion, panic, and player interaction
 ]]
 
-local RSGCore = exports['rsg-core']:GetCoreObject()
+-- Framework Detection (LXRCore primary, RSG-Core supported)
+local CoreObject = nil
+local CoreName = nil
+
+if Config.Framework == 'LXRCore' then
+    CoreObject = exports['lxr-core']:GetCoreObject()
+    CoreName = 'LXRCore'
+elseif Config.Framework == 'RSG' then
+    CoreObject = exports['rsg-core']:GetCoreObject()
+    CoreName = 'RSG-Core'
+else
+    -- Auto-detect
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    elseif GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: No supported framework found!')
+    end
+end
+
+print(string.format('^2[TLW Cattle Herding]^7 Using framework: ^3%s^7', CoreName or 'None'))
 
 -- Player data
 local playerData = {}
@@ -60,7 +86,7 @@ Citizen.CreateThread(function()
     -- Create blips
     CreateLocationBlips()
     
-    print('^2[Cattle Herding]^7 Client started')
+    print('^2[TLW Cattle Herding]^7 Client started | www.wolves.land')
 end)
 
 -- ==========================================
@@ -382,6 +408,12 @@ function StartHerdAI()
         while activeHerd.active do
             Citizen.Wait(100) -- Check frequently to catch deaths
             
+            -- Check if safety feature is enabled
+            if not Config.Security.fail_on_player_kill then
+                Citizen.Wait(900) -- If disabled, check less frequently
+                goto continue
+            end
+            
             local playerPed = PlayerPedId()
             
             -- Check each cattle
@@ -392,27 +424,17 @@ function StartHerdAI()
                         -- Check if player caused the death
                         local killer = GetPedSourceOfDeath(cattle)
                         
-                        -- Check if player or player's mount killed the cattle
+                        -- Direct check: player or player's mount killed the cattle
                         if killer == playerPed or (IsPedOnMount(playerPed) and killer == GetMount(playerPed)) then
                             -- Player killed their own cattle - FAIL MISSION
                             FailMission('player_killed_cattle')
-                            break
-                        end
-                        
-                        -- Also check if player's weapon caused the damage
-                        local causeOfDeath = GetPedCauseOfDeath(cattle)
-                        if causeOfDeath ~= 0 then
-                            -- Check if player has this weapon equipped or recently used it
-                            local playerWeapon = GetSelectedPedWeapon(playerPed)
-                            if playerWeapon == causeOfDeath then
-                                -- Player killed cattle with their weapon
-                                FailMission('player_killed_cattle')
-                                break
-                            end
+                            return -- Exit thread immediately
                         end
                     end
                 end
             end
+            
+            ::continue::
         end
     end)
 end

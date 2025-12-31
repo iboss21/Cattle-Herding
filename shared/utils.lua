@@ -1,5 +1,8 @@
 --[[
     Shared Utilities for tlw_cattle_herding
+    The Land of Wolves - www.wolves.land
+    Developer: iBoss
+    
     Functions used by both client and server
 ]]
 
@@ -181,11 +184,20 @@ function Utils.GetHeadingFromCoords(coord1, coord2)
     return (heading + 360) % 360
 end
 
--- Notification helper (if available)
+-- Notification helper (multi-framework support)
 function Utils.Notify(message, type)
     if IsDuplicityVersion() then
         -- Server side
         return
+    end
+    
+    -- Try LXRCore notification first
+    if GetResourceState('lxr-core') == 'started' then
+        local LXRCore = exports['lxr-core']:GetCoreObject()
+        if LXRCore and LXRCore.Functions and LXRCore.Functions.Notify then
+            LXRCore.Functions.Notify(message, type or 'primary')
+            return
+        end
     end
     
     -- Try RSG-Core notification
@@ -199,7 +211,7 @@ function Utils.Notify(message, type)
     
     -- Fallback to chat
     TriggerEvent('chat:addMessage', {
-        args = {'[Cattle]', message}
+        args = {'[TLW Cattle]', message}
     })
 end
 
@@ -207,7 +219,7 @@ end
 function Utils.Debug(...)
     if Config.Debug then
         local args = {...}
-        local message = '[Cattle Debug]'
+        local message = '[TLW Cattle Debug]'
         for _, v in ipairs(args) do
             message = message .. ' ' .. tostring(v)
         end

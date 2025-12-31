@@ -1,5 +1,9 @@
 # Safety Feature: Mission Failure on Cattle Kill
 
+**The Land of Wolves** - www.wolves.land  
+**Developer:** iBoss  
+**Version:** 2.1.0
+
 ## Overview
 This update adds a safety feature that prevents players from exploiting the cattle herding system by killing their own cattle for pelts and meat.
 
