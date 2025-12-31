@@ -11,11 +11,19 @@ local CoreObject = nil
 local CoreName = nil
 
 if Config.Framework == 'LXRCore' then
-    CoreObject = exports['lxr-core']:GetCoreObject()
-    CoreName = 'LXRCore'
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: LXRCore specified in config but not found!')
+    end
 elseif Config.Framework == 'RSG' then
-    CoreObject = exports['rsg-core']:GetCoreObject()
-    CoreName = 'RSG-Core'
+    if GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: RSG-Core specified in config but not found!')
+    end
 else
     -- Auto-detect
     if GetResourceState('lxr-core') == 'started' then
@@ -24,12 +32,15 @@ else
     elseif GetResourceState('rsg-core') == 'started' then
         CoreObject = exports['rsg-core']:GetCoreObject()
         CoreName = 'RSG-Core'
-    else
-        print('^1[TLW Cattle Herding]^7 ERROR: No supported framework found!')
     end
 end
 
-print(string.format('^2[TLW Cattle Herding]^7 Using framework: ^3%s^7', CoreName or 'None'))
+if CoreObject then
+    print(string.format('^2[TLW Cattle Herding]^7 Using framework: ^3%s^7', CoreName))
+else
+    print('^1[TLW Cattle Herding]^7 CRITICAL ERROR: No supported framework found! Resource will not function.')
+    print('^1[TLW Cattle Herding]^7 Please install LXRCore or RSG-Core framework.')
+end
 
 -- Player data
 local playerData = {}
@@ -405,14 +416,13 @@ function StartHerdAI()
     
     -- Monitor cattle health and detect player-caused deaths
     Citizen.CreateThread(function()
+        -- Only run if safety feature is enabled
+        if not Config.Security or not Config.Security.fail_on_player_kill then
+            return -- Exit thread if disabled
+        end
+        
         while activeHerd.active do
             Citizen.Wait(100) -- Check frequently to catch deaths
-            
-            -- Check if safety feature is enabled
-            if not Config.Security.fail_on_player_kill then
-                Citizen.Wait(900) -- If disabled, check less frequently
-                goto continue
-            end
             
             local playerPed = PlayerPedId()
             
@@ -433,8 +443,6 @@ function StartHerdAI()
                     end
                 end
             end
-            
-            ::continue::
         end
     end)
 end

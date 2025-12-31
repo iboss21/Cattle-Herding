@@ -11,11 +11,19 @@ local CoreObject = nil
 local CoreName = nil
 
 if Config.Framework == 'LXRCore' then
-    CoreObject = exports['lxr-core']:GetCoreObject()
-    CoreName = 'LXRCore'
+    if GetResourceState('lxr-core') == 'started' then
+        CoreObject = exports['lxr-core']:GetCoreObject()
+        CoreName = 'LXRCore'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: LXRCore specified in config but not found!')
+    end
 elseif Config.Framework == 'RSG' then
-    CoreObject = exports['rsg-core']:GetCoreObject()
-    CoreName = 'RSG-Core'
+    if GetResourceState('rsg-core') == 'started' then
+        CoreObject = exports['rsg-core']:GetCoreObject()
+        CoreName = 'RSG-Core'
+    else
+        print('^1[TLW Cattle Herding]^7 ERROR: RSG-Core specified in config but not found!')
+    end
 else
     -- Auto-detect
     if GetResourceState('lxr-core') == 'started' then
@@ -24,12 +32,15 @@ else
     elseif GetResourceState('rsg-core') == 'started' then
         CoreObject = exports['rsg-core']:GetCoreObject()
         CoreName = 'RSG-Core'
-    else
-        print('^1[TLW Cattle Herding]^7 ERROR: No supported framework found!')
     end
 end
 
-print(string.format('^2[TLW Cattle Herding]^7 Server using framework: ^3%s^7', CoreName or 'None'))
+if CoreObject then
+    print(string.format('^2[TLW Cattle Herding]^7 Server using framework: ^3%s^7', CoreName))
+else
+    print('^1[TLW Cattle Herding]^7 CRITICAL ERROR: No supported framework found! Resource will not function.')
+    print('^1[TLW Cattle Herding]^7 Please install LXRCore or RSG-Core framework.')
+end
 
 -- Active contracts (citizenid => contract data)
 local activeContracts = {}
@@ -67,9 +78,18 @@ end)
 -- HELPER FUNCTIONS
 -- ==========================================
 
+-- Safe wrapper for getting player (handles missing framework)
+local function GetPlayer(source)
+    if not CoreObject then
+        print('^1[TLW Cattle Herding]^7 ERROR: Cannot get player - no framework loaded')
+        return nil
+    end
+    return CoreObject.Functions.GetPlayer(source)
+end
+
 -- Get or load player data
 local function GetPlayerData(source)
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return nil end
     
     local citizenid = Player.PlayerData.citizenid
@@ -84,7 +104,7 @@ end
 
 -- Load player data from database
 local function LoadPlayerData(source, callback)
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then
         callback(nil)
         return
@@ -117,7 +137,7 @@ end
 
 -- Validate player can perform action
 local function ValidatePlayer(source)
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return false end
     
     -- Job whitelist check if configured
@@ -155,7 +175,7 @@ end)
 -- Player dropped
 AddEventHandler('playerDropped', function()
     local source = source
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     
     if Player then
         local citizenid = Player.PlayerData.citizenid
@@ -192,7 +212,7 @@ RegisterNetEvent('tlw_cattle:buyCattle', function(cattleType, count, locationId)
         return
     end
     
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -281,7 +301,7 @@ end)
 
 RegisterNetEvent('tlw_cattle:hireCowboys', function(count)
     local source = source
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -350,7 +370,7 @@ RegisterNetEvent('tlw_cattle:sellCattle', function(locationId, cattleAlive, dist
         return
     end
     
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -502,7 +522,7 @@ end)
 -- Update contract progress (distance, cattle count)
 RegisterNetEvent('tlw_cattle:updateProgress', function(data)
     local source = source
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -526,7 +546,7 @@ end)
 -- Rustler encounter completed
 RegisterNetEvent('tlw_cattle:rustlerEncounter', function(defeated, cattleStolen)
     local source = source
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -562,7 +582,7 @@ end)
 -- Mission failed (player killed cattle)
 RegisterNetEvent('tlw_cattle:missionFailed', function(contractToken, reason)
     local source = source
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -627,7 +647,7 @@ end)
 -- Request active contract info
 RegisterNetEvent('tlw_cattle:requestContractInfo', function()
     local source = source
-    local Player = CoreObject.Functions.GetPlayer(source)
+    local Player = GetPlayer(source)
     if not Player then return end
     
     local citizenid = Player.PlayerData.citizenid
@@ -642,6 +662,9 @@ end)
 -- ==========================================
 -- ADMIN COMMANDS
 -- ==========================================
+
+-- Only register commands if framework is loaded
+if CoreObject and CoreObject.Commands then
 
 -- Set player XP
 CoreObject.Commands.Add(Config.Admin.commands.setxp or 'cattle_setxp', 'Set player cattle XP (Admin)', {{name = 'id', help = 'Player ID'}, {name = 'xp', help = 'XP Amount'}}, false, function(source, args)
@@ -729,5 +752,9 @@ CoreObject.Commands.Add('cattle_updateprices', 'Force price update (Admin)', {},
     Pricing.ForceUpdate()
     TriggerClientEvent('chat:addMessage', source, {args = {'[Cattle]', 'Prices updated'}})
 end, 'admin')
+
+else
+    print('^1[TLW Cattle Herding]^7 WARNING: Admin commands not registered - no framework loaded')
+end
 
 Utils.Debug('Server main loaded')

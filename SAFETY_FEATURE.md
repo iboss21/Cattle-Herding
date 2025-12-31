@@ -103,15 +103,16 @@ Config.Messages = {
 ## Technical Details
 
 ### Detection Method
-The system uses FiveM/RedM natives:
-- `GetPedSourceOfDeath()` - Identifies who/what killed the cattle
-- `GetPedCauseOfDeath()` - Identifies weapon used
-- `GetSelectedPedWeapon()` - Checks player's current weapon
+The system uses FiveM/RedM native:
+- `GetPedSourceOfDeath()` - Identifies who/what killed the cattle (player, mount, NPC, etc.)
+
+The implementation directly checks if the killer is the player's ped or the player's mount, providing accurate detection without false positives.
 
 ### Performance Impact
 - Minimal: Detection thread runs at 100ms intervals (10 times per second)
 - Only active during an active herding mission
-- Thread terminates when mission ends
+- Only runs when `Config.Security.fail_on_player_kill` is enabled
+- Thread terminates when mission ends or is disabled
 
 ### Security
 - Server validates the contract token before marking as failed
@@ -129,5 +130,5 @@ Potential improvements for consideration:
 If you encounter issues:
 1. Check server console for debug messages (enable with `Config.Debug = true`)
 2. Verify database migration was successful
-3. Check that RSG-Core framework is up to date
+3. Check that LXRCore or RSG-Core framework is up to date
 4. Report issues with reproduction steps
