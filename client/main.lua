@@ -376,6 +376,45 @@ function StartHerdAI()
             ApplyCohesionForces()
         end
     end)
+    
+    -- Monitor cattle health and detect player-caused deaths
+    Citizen.CreateThread(function()
+        while activeHerd.active do
+            Citizen.Wait(100) -- Check frequently to catch deaths
+            
+            local playerPed = PlayerPedId()
+            
+            -- Check each cattle
+            for _, cattle in ipairs(activeHerd.entities) do
+                if DoesEntityExist(cattle) then
+                    -- Check if cattle is dying or dead
+                    if IsEntityDead(cattle) or IsPedDeadOrDying(cattle, true) then
+                        -- Check if player caused the death
+                        local killer = GetPedSourceOfDeath(cattle)
+                        
+                        -- Check if player or player's mount killed the cattle
+                        if killer == playerPed or (IsPedOnMount(playerPed) and killer == GetMount(playerPed)) then
+                            -- Player killed their own cattle - FAIL MISSION
+                            FailMission('player_killed_cattle')
+                            break
+                        end
+                        
+                        -- Also check if player's weapon caused the damage
+                        local causeOfDeath = GetPedCauseOfDeath(cattle)
+                        if causeOfDeath ~= 0 then
+                            -- Check if player has this weapon equipped or recently used it
+                            local playerWeapon = GetSelectedPedWeapon(playerPed)
+                            if playerWeapon == causeOfDeath then
+                                -- Player killed cattle with their weapon
+                                FailMission('player_killed_cattle')
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
 end
 
 -- Calculate how player position/movement affects herd
@@ -800,6 +839,23 @@ function CleanupHerd()
     
     stragglers = {}
     aiCowboys = {}
+end
+
+-- Fail mission (player killed cattle)
+function FailMission(reason)
+    if not activeHerd.active then return end
+    
+    Utils.Debug('Mission failed:', reason)
+    
+    -- Notify player
+    Utils.Notify(Config.Messages.mission_failed, 'error')
+    Utils.Notify(Config.Messages.mission_failed_subtitle, 'error')
+    
+    -- Notify server to mark contract as failed
+    TriggerServerEvent('tlw_cattle:missionFailed', activeHerd.token, reason)
+    
+    -- Clean up the herd
+    CleanupHerd()
 end
 
 -- ==========================================

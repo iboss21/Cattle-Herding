@@ -412,6 +412,9 @@ Config.Messages = {
     
     cowboy_hired = "Hired %d cowboys ($%d)",
     cowboy_locked = "Unlock at level %d",
+    
+    mission_failed = "⛔ MISSION FAILED: You killed your own cattle!",
+    mission_failed_subtitle = "Your contract has been terminated.",
 }
 
 -- ==============================================

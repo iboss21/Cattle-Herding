@@ -533,6 +533,42 @@ RegisterNetEvent('tlw_cattle:rustlerEncounter', function(defeated, cattleStolen)
     end
 end)
 
+-- Mission failed (player killed cattle)
+RegisterNetEvent('tlw_cattle:missionFailed', function(contractToken, reason)
+    local source = source
+    local Player = RSGCore.Functions.GetPlayer(source)
+    if not Player then return end
+    
+    local citizenid = Player.PlayerData.citizenid
+    
+    -- Verify contract exists and belongs to player
+    if not activeContracts[citizenid] then
+        return
+    end
+    
+    local contract = activeContracts[citizenid]
+    
+    -- Verify token matches (security check)
+    if contract.token ~= contractToken then
+        Utils.Debug('Token mismatch in mission failure')
+        return
+    end
+    
+    Utils.Debug(string.format('Mission failed for player %s. Reason: %s', citizenid, reason))
+    
+    -- Mark contract as failed in database
+    DB.CompleteContract(contract.token, 0, 'failed')
+    
+    -- Update player stats (track failed deliveries)
+    DB.UpdatePlayerStats(citizenid, {
+        failed_deliveries = 1,
+        cattle_lost = contract.herd_size
+    })
+    
+    -- Clear active contract
+    activeContracts[citizenid] = nil
+end)
+
 -- ==========================================
 -- CLIENT REQUESTS
 -- ==========================================

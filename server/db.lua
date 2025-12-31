@@ -89,6 +89,11 @@ function DB.UpdatePlayerStats(citizenid, stats, callback)
         table.insert(params, stats.perfect_deliveries)
     end
     
+    if stats.failed_deliveries then
+        table.insert(updates, 'failed_deliveries = failed_deliveries + ?')
+        table.insert(params, stats.failed_deliveries)
+    end
+    
     query = query .. table.concat(updates, ', ') .. ', updated_at = NOW() WHERE citizenid = ?'
     table.insert(params, citizenid)
     
