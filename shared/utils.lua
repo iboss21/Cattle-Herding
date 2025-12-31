@@ -247,4 +247,13 @@ function Utils.DeepCopy(orig)
     return copy
 end
 
+-- Get table length (including non-sequential keys)
+function Utils.TableLength(t)
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
 return Utils
